@@ -39,7 +39,7 @@
 | `/shenghua-commit` | 極簡 Conventional Commits message |
 | `/shenghua-review` | 極簡 code review(一行一發現) |
 
-自然語言亦可:「省話模式」啟用、「停止省話」「正常模式」停用。
+自然語言亦可:「省話模式」啟用;「停止省話」或「恢復正常模式」停用(「正常模式」單獨成句亦可,避免一般討論誤觸)。
 
 預設等級設定:環境變數 `SHENGHUA_DEFAULT_MODE=wenyan`,或 `~/.config/shenghua/config.json`:`{ "defaultMode": "wenyan" }`。
 
