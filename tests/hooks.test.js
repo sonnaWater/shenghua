@@ -160,6 +160,30 @@ test('tracker: 「停止省話」 removes flag', () => {
   assert.ok(!fs.existsSync(flag));
 });
 
+test('tracker: 「請不要使用省話模式」does not activate, removes existing flag', () => {
+  const dir = tmpConfigDir();
+  const flag = path.join(dir, '.shenghua-active');
+  config.safeWriteFlag(flag, 'shenghua');
+  runTracker({ prompt: '請不要使用省話模式' }, { CLAUDE_CONFIG_DIR: dir });
+  assert.ok(!fs.existsSync(flag));
+});
+
+test('tracker: mentioning 正常模式 in discussion keeps flag', () => {
+  const dir = tmpConfigDir();
+  const flag = path.join(dir, '.shenghua-active');
+  config.safeWriteFlag(flag, 'wenyan');
+  runTracker({ prompt: '文件裡提到正常模式的定義是什麼?' }, { CLAUDE_CONFIG_DIR: dir });
+  assert.strictEqual(config.readFlag(flag), 'wenyan');
+});
+
+test('tracker: 「恢復正常模式」removes flag', () => {
+  const dir = tmpConfigDir();
+  const flag = path.join(dir, '.shenghua-active');
+  config.safeWriteFlag(flag, 'shenghua');
+  runTracker({ prompt: '恢復正常模式' }, { CLAUDE_CONFIG_DIR: dir });
+  assert.ok(!fs.existsSync(flag));
+});
+
 test('tracker: active flag emits per-turn additionalContext', () => {
   const dir = tmpConfigDir();
   config.safeWriteFlag(path.join(dir, '.shenghua-active'), 'jian');

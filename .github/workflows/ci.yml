@@ -51,5 +51,5 @@ jobs:
 
       - name: Python lint
         run: |
-          pip install ruff
+          pip install ruff==0.8.4
           ruff check benchmarks/

@@ -25,7 +25,7 @@ process.stdin.on('end', () => {
     if (/(開啟|啟用|打開|進入|使用).{0,6}省話/.test(prompt) ||
         /省話模式/.test(prompt) ||
         /\b(activate|enable|turn on|start)\b.*\bshenghua\b/i.test(prompt)) {
-      if (!/(關閉|停止|取消|退出)/.test(prompt) && !/\b(stop|disable|turn off)\b/i.test(prompt)) {
+      if (!/(關閉|停止|取消|退出|不要|別|勿|不想)/.test(prompt) && !/\b(stop|disable|turn off)\b/i.test(prompt)) {
         const mode = getDefaultMode();
         if (mode !== 'off') safeWriteFlag(flagPath, mode);
       }
@@ -82,8 +82,10 @@ process.stdin.on('end', () => {
     }
 
     // Deactivation — natural language
-    if (/(停止|關閉|取消|退出).{0,6}省話/.test(prompt) ||
-        /正常模式/.test(prompt) ||
+    // 「正常模式」須帶切換動詞或單獨成句,避免一般討論誤觸停用。
+    if (/(停止|關閉|取消|退出|不要|別用|勿用).{0,6}省話/.test(prompt) ||
+        /(恢復|回到|切換到|改回|換回|回復)正常模式/.test(prompt) ||
+        prompt === '正常模式' ||
         /\b(stop|disable|deactivate|turn off)\b.*\bshenghua\b/i.test(prompt)) {
       try { fs.unlinkSync(flagPath); } catch (e) {}
     }
