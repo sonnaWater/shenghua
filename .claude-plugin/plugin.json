@@ -1,0 +1,33 @@
+{
+  "name": "shenghua",
+  "description": "繁體中文超壓縮溝通模式。省話一哥風格 + 文言文壓縮,節省約 65-80% token,技術正確性完整保留。",
+  "author": {
+    "name": "shenghua contributors"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/hooks/activate.js\"",
+            "timeout": 5,
+            "statusMessage": "載入省話模式..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/src/hooks/mode-tracker.js\"",
+            "timeout": 5,
+            "statusMessage": "追蹤省話模式..."
+          }
+        ]
+      }
+    ]
+  }
+}

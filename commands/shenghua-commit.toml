@@ -1,0 +1,13 @@
+description = "產生極簡 commit message(Conventional Commits)"
+
+prompt = """
+檢視當前 staged 變更(git diff --cached),產生極簡 commit message:
+
+- Conventional Commits 格式:type(scope): subject
+- subject ≤ 50 字元,英文,祈使句
+- body 僅在「為什麼」不明顯時才寫,每行 ≤ 72 字元
+- 不寫廢話(This commit.../Updated...)
+- type 從 feat/fix/docs/refactor/test/chore/perf 擇一
+
+{{args}}
+"""

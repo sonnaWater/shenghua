@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Syntax-check hook scripts
+        run: |
+          node --check src/hooks/config.js
+          node --check src/hooks/activate.js
+          node --check src/hooks/mode-tracker.js
+          node --check src/hooks/stats.js
+
+      - name: Hook unit tests
+        run: node --test tests/hooks.test.js
+
+      - name: Validate JSON files
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json','utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json','utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('benchmarks/prompts.json','utf8'))"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate TOML command files
+        run: |
+          python - <<'EOF'
+          import tomllib, pathlib
+          for f in pathlib.Path("commands").glob("*.toml"):
+              with open(f, "rb") as fh:
+                  data = tomllib.load(fh)
+              assert "description" in data and "prompt" in data, f
+              print(f"{f} OK")
+          EOF
+
+      - name: Benchmark dry-run (validates SKILL.md structure + level filtering)
+        run: python benchmarks/run.py --dry-run
+
+      - name: Python lint
+        run: |
+          pip install ruff
+          ruff check benchmarks/

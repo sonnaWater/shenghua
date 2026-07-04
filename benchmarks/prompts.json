@@ -1,0 +1,45 @@
+{
+  "description": "10 個繁體中文技術任務,用於量測各省話等級的輸出 token 節省率。",
+  "prompts": [
+    {
+      "id": "explain-rerender",
+      "prompt": "我的 React 元件一直重複渲染,該怎麼找出原因並修正?"
+    },
+    {
+      "id": "explain-pooling",
+      "prompt": "請解釋資料庫連線池的原理,以及什麼情況下該調整池的大小。"
+    },
+    {
+      "id": "debug-cors",
+      "prompt": "前端呼叫 API 出現 CORS 錯誤:Access-Control-Allow-Origin missing。後端是 Express,該怎麼修?"
+    },
+    {
+      "id": "explain-jwt",
+      "prompt": "JWT 和 session-based 認證各有什麼優缺點?我的新專案該選哪個?"
+    },
+    {
+      "id": "review-sql",
+      "prompt": "這段查詢很慢:SELECT * FROM orders WHERE YEAR(created_at) = 2025,資料表有兩千萬筆。如何優化?"
+    },
+    {
+      "id": "explain-docker",
+      "prompt": "Dockerfile 的 multi-stage build 是什麼?能舉例說明它如何縮小 image 嗎?"
+    },
+    {
+      "id": "debug-memory",
+      "prompt": "Node.js 服務跑幾天後記憶體從 200MB 漲到 2GB。如何定位 memory leak?"
+    },
+    {
+      "id": "explain-git",
+      "prompt": "git rebase 和 git merge 差在哪?團隊協作時該用哪個策略?"
+    },
+    {
+      "id": "explain-async",
+      "prompt": "Python 的 asyncio 和多執行緒有什麼差別?I/O 密集的爬蟲該用哪個?"
+    },
+    {
+      "id": "design-cache",
+      "prompt": "我的 API 要加快取層,Redis 的 cache-aside 和 write-through 模式怎麼選?"
+    }
+  ]
+}

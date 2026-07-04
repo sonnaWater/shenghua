@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "shenghua",
+  "description": "繁體中文超壓縮溝通模式 for Claude Code。省話一哥 + 文言文,省 token 不省內容。",
+  "owner": {
+    "name": "shenghua contributors"
+  },
+  "plugins": [
+    {
+      "name": "shenghua",
+      "description": "省話一哥模式。省 65-80% token,技術內容全留。",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}
