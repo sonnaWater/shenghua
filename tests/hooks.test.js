@@ -94,6 +94,20 @@ test('appendFlag + readHistory round-trip', () => {
   assert.strictEqual(JSON.parse(lines[1]).a, 2);
 });
 
+test('appendFlag rotates history above 1MB, keeping newest lines', () => {
+  const dir = tmpConfigDir();
+  const hist = path.join(dir, '.shenghua-history.jsonl');
+  const bigLine = JSON.stringify({ pad: 'x'.repeat(1000) });
+  const filler = (bigLine + '\n').repeat(1100); // ~1.1MB
+  fs.writeFileSync(hist, filler);
+  config.appendFlag(hist, JSON.stringify({ last: true }));
+  const size = fs.statSync(hist).size;
+  assert.ok(size <= 1024 * 1024 / 2, `rotated size ${size}`);
+  const lines = config.readHistory(hist);
+  assert.strictEqual(JSON.parse(lines[lines.length - 1]).last, true);
+  for (const l of lines) JSON.parse(l); // no partial lines survive rotation
+});
+
 // ---------- activate.js level filtering ----------
 
 test('activate: default level emits only shenghua rows/examples', () => {

@@ -8,6 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const readline = require('readline');
 const { readFlag, appendFlag, readHistory } = require('./config');
 
 // Mean per-task output-token savings, measured by benchmarks/run.py.
@@ -31,6 +32,17 @@ const claudeDir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.cla
 const historyPath = path.join(claudeDir, '.shenghua-history.jsonl');
 const flagPath = path.join(claudeDir, '.shenghua-active');
 
+// --session-file may come from hook stdin (transcript_path) or the CLI.
+// Only accept .jsonl files inside $CLAUDE_CONFIG_DIR/projects — anything
+// else falls back to auto-discovery, so arbitrary file contents can never
+// be parsed and echoed into model context.
+function isValidSessionFile(p) {
+  if (!p || !p.endsWith('.jsonl')) return false;
+  const projectsDir = path.resolve(claudeDir, 'projects');
+  const resolved = path.resolve(p);
+  return resolved.startsWith(projectsDir + path.sep);
+}
+
 function findRecentSession() {
   const projectsDir = path.join(claudeDir, 'projects');
   let best = null;
@@ -53,26 +65,29 @@ function findRecentSession() {
   return best;
 }
 
-function parseSession(file) {
+// Streamed line-by-line so multi-MB transcripts never load whole into memory.
+async function parseSession(file) {
   let outputTokens = 0;
   let turns = 0;
   let model = null;
   let sessionId = path.basename(file, '.jsonl');
-  let raw;
   try {
-    raw = fs.readFileSync(file, 'utf8');
+    const rl = readline.createInterface({
+      input: fs.createReadStream(file, 'utf8'),
+      crlfDelay: Infinity
+    });
+    for await (const line of rl) {
+      if (!line.trim()) continue;
+      let entry;
+      try { entry = JSON.parse(line); } catch (e) { continue; }
+      if (entry.type === 'assistant' && entry.message && entry.message.usage) {
+        outputTokens += entry.message.usage.output_tokens || 0;
+        turns += 1;
+        if (entry.message.model) model = entry.message.model;
+      }
+    }
   } catch (e) {
     return null;
-  }
-  for (const line of raw.split('\n')) {
-    if (!line.trim()) continue;
-    let entry;
-    try { entry = JSON.parse(line); } catch (e) { continue; }
-    if (entry.type === 'assistant' && entry.message && entry.message.usage) {
-      outputTokens += entry.message.usage.output_tokens || 0;
-      turns += 1;
-      if (entry.message.model) model = entry.message.model;
-    }
   }
   return { sessionId, outputTokens, turns, model };
 }
@@ -110,10 +125,11 @@ function formatStats(s, mode) {
   return { text: lines.join('\n'), estSaved: 0 };
 }
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   const fileIdx = args.indexOf('--session-file');
-  const sessionFile = fileIdx !== -1 ? args[fileIdx + 1] : findRecentSession();
+  const requested = fileIdx !== -1 ? args[fileIdx + 1] : null;
+  const sessionFile = isValidSessionFile(requested) ? requested : findRecentSession();
 
   if (args.includes('--all')) {
     const lines = readHistory(historyPath);
@@ -142,7 +158,7 @@ function main() {
     process.stdout.write('找不到 session 紀錄檔($CLAUDE_CONFIG_DIR/projects/**/*.jsonl)。');
     return;
   }
-  const s = parseSession(sessionFile);
+  const s = await parseSession(sessionFile);
   if (!s) {
     process.stdout.write('無法讀取 session 檔: ' + sessionFile);
     return;
@@ -162,4 +178,6 @@ function main() {
   process.stdout.write(text);
 }
 
-main();
+main().catch(() => {
+  process.stdout.write('shenghua-stats: 執行失敗。');
+});

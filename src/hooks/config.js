@@ -149,6 +149,25 @@ function readFlag(flagPath) {
   }
 }
 
+// History file grows one line per /shenghua-stats run and is fully parsed
+// on --all, so cap it: reads only take the last MAX_HISTORY_BYTES, and
+// appends rotate the file down to half the cap once it exceeds the cap.
+const MAX_HISTORY_BYTES = 1024 * 1024;
+
+// Read at most the last `maxBytes` of an already-opened fd, dropping the
+// leading partial line when the file was truncated mid-line.
+function readTail(fd, size, maxBytes) {
+  const start = size > maxBytes ? size - maxBytes : 0;
+  const buf = Buffer.alloc(Math.min(size, maxBytes));
+  const n = fs.readSync(fd, buf, 0, buf.length, start);
+  let raw = buf.slice(0, n).toString('utf8');
+  if (start > 0) {
+    const nl = raw.indexOf('\n');
+    raw = nl === -1 ? '' : raw.slice(nl + 1);
+  }
+  return raw;
+}
+
 // Symlink-safe append (O_APPEND) for the lifetime stats log.
 function appendFlag(filePath, line) {
   try {
@@ -193,6 +212,29 @@ function appendFlag(filePath, line) {
     } finally {
       if (fd !== undefined) fs.closeSync(fd);
     }
+
+    // Rotate: keep only the newest half-cap once the file exceeds the cap.
+    const st = fs.lstatSync(realPath);
+    if (st.isFile() && !st.isSymbolicLink() && st.size > MAX_HISTORY_BYTES) {
+      let rfd;
+      let tail;
+      try {
+        rfd = fs.openSync(realPath, fs.constants.O_RDONLY | O_NOFOLLOW);
+        tail = readTail(rfd, st.size, MAX_HISTORY_BYTES / 2);
+      } finally {
+        if (rfd !== undefined) fs.closeSync(rfd);
+      }
+      const tempPath = realPath + `.${process.pid}.${Date.now()}`;
+      const wflags = fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | O_NOFOLLOW;
+      let wfd;
+      try {
+        wfd = fs.openSync(tempPath, wflags, 0o600);
+        fs.writeSync(wfd, tail);
+      } finally {
+        if (wfd !== undefined) fs.closeSync(wfd);
+      }
+      fs.renameSync(tempPath, realPath);
+    }
   } catch (e) {
     // Silent fail — history is best-effort
   }
@@ -207,7 +249,7 @@ function readHistory(filePath) {
     let raw;
     try {
       fd = fs.openSync(filePath, fs.constants.O_RDONLY | O_NOFOLLOW);
-      raw = fs.readFileSync(fd, 'utf8');
+      raw = readTail(fd, st.size, MAX_HISTORY_BYTES);
     } finally {
       if (fd !== undefined) fs.closeSync(fd);
     }
