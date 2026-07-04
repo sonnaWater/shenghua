@@ -81,12 +81,14 @@ python benchmarks/run.py --trials 3
 10 個繁中技術任務 × 基準/各等級 × 3 trials,temperature=0,取中位數。結果含 SKILL.md sha256,可完整重現。無 API key 可跑 `--dry-run` 驗證過濾邏輯。
 
 <!-- BENCHMARK-TABLE-START -->
-| 等級 | 平均節省率 |
-|---|---|
-| jian | (待實測) |
-| shenghua | (待實測) |
-| wenyan | (待實測) |
-| jiwen | (待實測) |
+| 等級 | 平均節省率 | 中位數 |
+|---|---|---|
+| jian | 31.3% | 31.9% |
+| shenghua | 29.4% | 30.0% |
+| wenyan | 35.5% | 36.3% |
+| jiwen | 5.8% | 2.8% |
+
+實測方法:`benchmarks/run_cli.py`(Claude Code CLI headless,sonnet,10 prompts × 1 trial,`disableAllHooks` 隔離本機外掛)。限制:CLI 無法固定 temperature、單 trial 噪音大;jiwen 多題出現負節省(模型寫完文言後自行補白話解釋),規則需修正後重測。API 版 `run.py`(temperature=0、3 trials)結果待補。
 <!-- BENCHMARK-TABLE-END -->
 
 ## 測試
